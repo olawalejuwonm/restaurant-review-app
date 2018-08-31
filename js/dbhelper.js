@@ -2,36 +2,82 @@
  * Common database helper functions.
  */
 class DBHelper {
-    /**
-     * Database URL.
-     * Change this to restaurants.json file location on your server.
-     */
     static get DATABASE_URL() {
-        const port = 8888; // Change this to your server port
-        return `data/restaurants.json`;
+        const port = 1337; // Change this to your server port
+        return `http://localhost:${port}/restaurants`;
+    }
+    static openDatabase() {
+        if (!window.navigator.serviceWorker) {
+            console.error(
+                "Your browser does not support Service Worker/IDB, please upgrade to the latest version of any major browser to enjoy offline mode"
+            );
+            return Promise.resolve();
+        }
+
+        let indexDb = idb.open("restaurantsDatabase", 1, upgradeDb => {
+            const store = upgradeDb.createObjectStore("restaurantDB", {
+                keypath: "id"
+            });
+            store.createIndex("by-id", "id");
+        });
+        return indexDb;
+    }
+    static getRestaurantFromServer() {
+        return fetch(DBHelper.DATABASE_URL)
+            .then(response => {
+                return response.json();
+            })
+            .then(restaurants => {
+                DBHelper.saveDataToIdb(restaurants);
+                return restaurants;
+            });
+    }
+
+    static saveDataToIdb(restautantsData) {
+        return DBHelper.openDatabase()
+            .then(database => {
+                if (!database) return;
+                const tx = database.transaction("restaurantDB", "readwrite");
+                const store = tx.objectStore("restaurantDB");
+                restautantsData.forEach(restaurant => {
+                    console.log(restaurant);
+                    store.put(restaurant, restaurant.id);
+                });
+                return tx.complete;
+            })
+            .then(() => {
+                console.info("Transaction completed");
+            });
+    }
+
+    static fetchStoredRestaurants() {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            let store = database
+                .transaction("restaurantDB")
+                .objectStore("restaurantDB");
+
+            return store.getAll();
+        });
     }
 
     /**
      * Fetch all restaurants.
      */
     static fetchRestaurants(callback) {
-        let xhr = new XMLHttpRequest();
-        xhr.open("GET", DBHelper.DATABASE_URL);
-        xhr.onload = () => {
-            if (xhr.status === 200) {
-                // Got a success response from server!
-                const json = JSON.parse(xhr.responseText);
-                const restaurants = json.restaurants;
+        return DBHelper.fetchStoredRestaurants()
+            .then(restaurants => {
+                if (!restaurants.length) {
+                    return DBHelper.getRestaurantFromServer();
+                }
+                return Promise.resolve(restaurants);
+            })
+            .then(restaurants => {
                 callback(null, restaurants);
-            } else {
-                // Oops!. Got an error from server.
-                const error = `Request failed. Returned status of ${
-                    xhr.status
-                }`;
-                callback(error, null);
-            }
-        };
-        xhr.send();
+            })
+            .catch(err => {
+                callback(err, null);
+            });
     }
 
     /**
@@ -175,7 +221,8 @@ class DBHelper {
      * Restaurant image URL.
      */
     static imageUrlForRestaurant(restaurant) {
-        return `/img/${restaurant.photograph}`;
+        console.log(restaurant);
+        return `/img/${restaurant.photograph || restaurant.id}.jpg`;
     }
 
     /**
