@@ -8,6 +8,7 @@ let filesToCache = [
     "./js/restaurant_info.js",
     "./js/dbhelper.js",
     "./js/idb.js",
+    "./js/lazyload.min.js",
     "./data/restaurants.json",
     "./css/styles.css",
     "https://unpkg.com/leaflet@1.3.1/dist/leaflet.css",
@@ -55,7 +56,7 @@ self.addEventListener("activate", event => {
 
 self.addEventListener("fetch", event => {
     event.respondWith(
-        caches.match(event.request).then(response => {
+        caches.match(event.request, { ignoreSearch: true }).then(response => {
             if (response) {
                 return response;
             }
