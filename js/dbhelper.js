@@ -34,20 +34,15 @@ class DBHelper {
     }
 
     static saveDataToIdb(restautantsData) {
-        return DBHelper.openDatabase()
-            .then(database => {
-                if (!database) return;
-                const tx = database.transaction("restaurantDB", "readwrite");
-                const store = tx.objectStore("restaurantDB");
-                restautantsData.forEach(restaurant => {
-                    console.log(restaurant);
-                    store.put(restaurant, restaurant.id);
-                });
-                return tx.complete;
-            })
-            .then(() => {
-                console.info("Transaction completed");
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            const tx = database.transaction("restaurantDB", "readwrite");
+            const store = tx.objectStore("restaurantDB");
+            restautantsData.forEach(restaurant => {
+                store.put(restaurant, restaurant.id);
             });
+            return tx.complete;
+        });
     }
 
     static fetchStoredRestaurants() {
