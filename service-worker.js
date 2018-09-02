@@ -8,6 +8,7 @@ let filesToCache = [
     "./js/restaurant_info.js",
     "./js/dbhelper.js",
     "./js/idb.js",
+    "./js/lazyload.min.js"
     "./data/restaurants.json",
     "./css/styles.css",
     "https://unpkg.com/leaflet@1.3.1/dist/leaflet.css",
