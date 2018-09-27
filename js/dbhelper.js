@@ -18,11 +18,18 @@ class DBHelper {
             return Promise.resolve();
         }
 
-        let indexDb = idb.open("restaurantsDatabase", 1, upgradeDb => {
-            const store = upgradeDb.createObjectStore("restaurantDB", {
+        let indexDb = idb.open("restReviewAppDatabase", 1, upgradeDb => {
+            const restaurantStore = upgradeDb.createObjectStore(
+                "restaurantDB",
+                {
+                    keypath: "id"
+                }
+            );
+            const reviewStore = upgradeDb.createObjectStore("reviewsDB", {
                 keypath: "id"
             });
-            store.createIndex("by-id", "id");
+            restaurantStore.createIndex("by-id", "id");
+            reviewStore.createIndex("by-id", "id");
         });
         return indexDb;
     }
@@ -32,7 +39,7 @@ class DBHelper {
                 return response.json();
             })
             .then(restaurants => {
-                DBHelper.saveDataToIdb(restaurants);
+                DBHelper.saveRestaurantDataToIdb(restaurants);
                 return restaurants;
             });
     }
@@ -43,17 +50,30 @@ class DBHelper {
                 return response.json();
             })
             .then(reviews => {
+                DBHelper.saveReviewsToIdb(reviews);
                 return reviews;
             });
     }
 
-    static saveDataToIdb(restautantsData) {
+    static saveRestaurantDataToIdb(restautantsData) {
         return DBHelper.openDatabase().then(database => {
             if (!database) return;
             const tx = database.transaction("restaurantDB", "readwrite");
             const store = tx.objectStore("restaurantDB");
             restautantsData.forEach(restaurant => {
                 store.put(restaurant, restaurant.id);
+            });
+            return tx.complete;
+        });
+    }
+
+    static saveReviewsToIdb(reviews) {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            const tx = database.transaction("reviewsDB", "readwrite");
+            const store = tx.objectStore("reviewsDB");
+            reviews.forEach(review => {
+                store.put(review, review.id);
             });
             return tx.complete;
         });
