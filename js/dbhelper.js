@@ -1,10 +1,14 @@
 /**
  * Common database helper functions.
  */
+const port = 1337;
 class DBHelper {
     static get DATABASE_URL() {
-        const port = 1337; // Change this to your server port
+        // const port = 1337; // Change this to your server port
         return `http://localhost:${port}/restaurants`;
+    }
+    static get REVIEWS_URL() {
+        return `http://localhost:${port}/reviews`;
     }
     static openDatabase() {
         if (!window.navigator.serviceWorker) {
@@ -30,6 +34,16 @@ class DBHelper {
             .then(restaurants => {
                 DBHelper.saveDataToIdb(restaurants);
                 return restaurants;
+            });
+    }
+
+    static fetchRestaurantReviews() {
+        return fetch(DBHelper.REVIEWS_URL)
+            .then(response => {
+                return response.json();
+            })
+            .then(reviews => {
+                return reviews;
             });
     }
 

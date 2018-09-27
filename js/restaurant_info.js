@@ -1,4 +1,4 @@
-let restaurant;
+let restaurant, reviews;
 var newMap;
 
 /**
@@ -40,22 +40,6 @@ initMap = () => {
         }
     });
 };
-
-/* window.initMap = () => {
-  fetchRestaurantFromURL((error, restaurant) => {
-    if (error) { // Got an error!
-      console.error(error);
-    } else {
-      self.map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 16,
-        center: restaurant.latlng,
-        scrollwheel: false
-      });
-      fillBreadcrumb();
-      DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
-    }
-  });
-} */
 
 /**
  * Get current restaurant from page URL.
@@ -107,6 +91,7 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
         fillRestaurantHoursHTML();
     }
     // fill reviews
+
     fillReviewsHTML();
 };
 
@@ -135,23 +120,31 @@ fillRestaurantHoursHTML = (
 /**
  * Create all reviews HTML and add them to the webpage.
  */
-fillReviewsHTML = (reviews = self.restaurant.reviews) => {
+fillReviewsHTML = () => {
     const container = document.getElementById("reviews-container");
     const title = document.createElement("h3");
     title.innerHTML = "Reviews";
     container.appendChild(title);
-
-    if (!reviews) {
-        const noReviews = document.createElement("p");
-        noReviews.innerHTML = "No reviews yet!";
-        container.appendChild(noReviews);
-        return;
-    }
-    const ul = document.getElementById("reviews-list");
-    reviews.forEach(review => {
-        ul.appendChild(createReviewHTML(review));
-    });
-    container.appendChild(ul);
+    DBHelper.fetchRestaurantReviews()
+        .then(reviews => {
+            console.log(reviews);
+            if (!reviews) {
+                const noReviews = document.createElement("p");
+                noReviews.innerHTML = "No reviews yet!";
+                container.appendChild(noReviews);
+                return;
+            }
+            const ul = document.getElementById("reviews-list");
+            reviews.forEach(review => {
+                if (review.restaurant_id === self.restaurant.id) {
+                    ul.appendChild(createReviewHTML(review));
+                    container.appendChild(ul);
+                }
+            });
+        })
+        .catch(error => {
+            console.log(error);
+        });
 };
 
 /**
@@ -168,7 +161,7 @@ createReviewHTML = review => {
     reviewHeader.appendChild(name);
 
     const date = document.createElement("span");
-    date.innerHTML = review.date;
+    date.innerHTML = new Date(review.updatedAt).toLocaleDateString();
     date.setAttribute("class", "review-date");
     reviewHeader.appendChild(date);
     li.appendChild(reviewHeader);
