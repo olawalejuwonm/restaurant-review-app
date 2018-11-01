@@ -18,6 +18,7 @@ class DBHelper {
             return Promise.resolve();
         }
 
+
         let indexDb = idb.open("restReviewAppDatabase", 1, upgradeDb => {
             const restaurantStore = upgradeDb.createObjectStore(
                 "restaurantDB",
@@ -85,6 +86,16 @@ class DBHelper {
             let store = database
                 .transaction("restaurantDB")
                 .objectStore("restaurantDB");
+
+            return store.getAll();
+        });
+    }
+    static fetchStoredReviews() {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            let store = database
+                .transaction("reviewsDB")
+                .objectStore("reviewsDB");
 
             return store.getAll();
         });

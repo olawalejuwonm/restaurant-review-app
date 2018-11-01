@@ -1,4 +1,4 @@
-let restaurant, reviews;
+let restaurant;
 var newMap;
 
 /**
