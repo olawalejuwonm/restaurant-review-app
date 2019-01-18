@@ -18,7 +18,6 @@ class DBHelper {
             return Promise.resolve();
         }
 
-
         let indexDb = idb.open("restReviewAppDatabase", 1, upgradeDb => {
             const restaurantStore = upgradeDb.createObjectStore(
                 "restaurantDB",
@@ -29,6 +28,12 @@ class DBHelper {
             const reviewStore = upgradeDb.createObjectStore("reviewsDB", {
                 keypath: "id"
             });
+            const deferedReviewStore = upgradeDb.createObjectStore(
+                "deferedReviewDB",
+                {
+                    keypath: "id"
+                }
+            );
             restaurantStore.createIndex("by-id", "id");
             reviewStore.createIndex("by-id", "id");
         });
@@ -52,7 +57,8 @@ class DBHelper {
             })
             .then(reviews => {
                 DBHelper.saveReviewsToIdb(reviews);
-                return reviews;
+                let allReviews = DBHelper.fetchStoredReviews();
+                return allReviews;
             });
     }
 
@@ -96,6 +102,48 @@ class DBHelper {
             let store = database
                 .transaction("reviewsDB")
                 .objectStore("reviewsDB");
+
+            return store.getAll();
+        });
+    }
+    /*
+     *  Add new Review to the review DB
+     */
+    static addNewReview(review) {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            let transaction = database.transaction("reviewsDB", "readwrite");
+            let store = transaction.objectStore("reviewsDB");
+            console.log();
+            store.put(review, review.id);
+            return transaction.complete;
+        });
+    }
+    /*
+     * save new reviews to the deferedDB and wait for network connection
+     */
+    static addDeferedToIDB(data) {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            let transaction = database.transaction(
+                "deferedReviewDB",
+                "readwrite"
+            );
+            let store = transaction.objectStore("deferedReviewDB");
+
+            store.put(data, data.id);
+            return transaction.complete;
+        });
+    }
+    /*
+     * fetch deferedDB reviews
+     */
+    static fethcDeferedReview() {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            let store = database
+                .transaction("deferedReviewDB")
+                .objectStore("deferedReviewDB");
 
             return store.getAll();
         });
@@ -280,14 +328,21 @@ class DBHelper {
         marker.addTo(newMap);
         return marker;
     }
-    /* static mapMarkerForRestaurant(restaurant, map) {
-    const marker = new google.maps.Marker({
-      position: restaurant.latlng,
-      title: restaurant.name,
-      url: DBHelper.urlForRestaurant(restaurant),
-      map: map,
-      animation: google.maps.Animation.DROP}
-    );
-    return marker;
-  } */
+    static saveReviewtoServer(review, callback) {
+        fetch(`${DBHelper.REVIEWS_URL}/`, {
+            method: "POST",
+            body: JSON.stringify(review),
+            header: {
+                "Content-Type": "application/json",
+                Accept: "application/json"
+            }
+        })
+            .then(res => res.json())
+            .then(review => {
+                callback(null, review);
+            })
+            .catch(error => {
+                callback(error, null);
+            });
+    }
 }
