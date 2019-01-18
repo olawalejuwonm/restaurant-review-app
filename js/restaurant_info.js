@@ -324,11 +324,10 @@ submitReview = () => {
                         review.updatedAt = date;
                         DBHelper.addDeferedToIDB(review)
                             .then(() => {
-                                worker.sync.register("sync-queue");
+                                worker.sync.register("offline-reviews");
                             })
                             .then(() => {
                                 console.log("Review Added to Queue");
-                                DBHelper.addNewReview(review); //add the response to IDB
                                 updateReviewsHTML(review); //update the view
                                 reviewer.value = "";
                                 reviewRating.value = "";

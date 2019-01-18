@@ -114,8 +114,21 @@ class DBHelper {
             if (!database) return;
             let transaction = database.transaction("reviewsDB", "readwrite");
             let store = transaction.objectStore("reviewsDB");
-            console.log();
             store.put(review, review.id);
+            return transaction.complete;
+        });
+    }
+
+    static deleteDeferedReview(reviewId) {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            let transaction = database.transaction(
+                "deferedReviewDB",
+                "readwrite"
+            );
+            let store = transaction.objectStore("deferedReviewDB");
+
+            store.delete(reviewId);
             return transaction.complete;
         });
     }
@@ -138,7 +151,7 @@ class DBHelper {
     /*
      * fetch deferedDB reviews
      */
-    static fethcDeferedReview() {
+    static fetchDeferedReview() {
         return DBHelper.openDatabase().then(database => {
             if (!database) return;
             let store = database

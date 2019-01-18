@@ -1,3 +1,7 @@
+// importScripts("/js/dbhelper.js");
+if ("function" === typeof importScripts) {
+    importScripts("/js/dbhelper.js");
+}
 let CACHE_NAME = "restaurant-cache-v1";
 
 let filesToCache = [
@@ -75,4 +79,35 @@ self.addEventListener("fetch", event => {
             });
         })
     );
+});
+
+self.addEventListener("sync", event => {
+    console.log("syncing started with ", event);
+    if (event.tag === "offline-reviews") {
+        event.waitUntil(
+            DBHelper.fetchDeferedReview()
+                .then(reviews => {
+                    reviews.forEach(review => {
+                        let newReview = {
+                            name: review.name,
+                            rating: review.rating,
+                            comments: review.comments,
+                            restaurant_id: review.restaurant_id
+                        };
+                        DBHelper.saveReviewtoServer(
+                            newReview,
+                            (error, response) => {
+                                if (error) {
+                                    console.log(error);
+                                }
+                                console.log("Moved from deffered to reviews");
+                                DBHelper.addNewReview(response); //add the response to IDB
+                                DBHelper.deleteDeferedReview(review.id); //delete the added review from deferedStore
+                            }
+                        );
+                    });
+                })
+                .catch(error => console.error(error))
+        );
+    }
 });
