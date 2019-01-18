@@ -196,6 +196,13 @@ updateReviewsHTML = review => {
     ul.appendChild(createReviewHTML(review));
 };
 
+flashSnackbar = message => {
+    let snackbar = document.querySelector("#snackbar");
+    snackbar.classList.add("show");
+    snackbar.innerHTML = message;
+
+    setTimeout(() => snackbar.classList.remove("show"), 4000);
+};
 /**
  * Add restaurant name to the breadcrumb navigation menu
  */
@@ -307,7 +314,7 @@ submitReview = () => {
                     if (error) {
                         console.log(error);
                     }
-                    console.log("Submited Successfully");
+                    flashSnackbar("Review Added Successfully");
                     DBHelper.addNewReview(response); //add the response to IDB
                     updateReviewsHTML(response); //update the view
                 });
@@ -327,7 +334,9 @@ submitReview = () => {
                                 worker.sync.register("offline-reviews");
                             })
                             .then(() => {
-                                console.log("Review Added to Queue");
+                                flashSnackbar(
+                                    "Review will be submitted when you have a network connection"
+                                );
                                 updateReviewsHTML(review); //update the view
                                 reviewer.value = "";
                                 reviewRating.value = "";
@@ -354,7 +363,7 @@ submitReview = () => {
                 reviewRating.value = "";
                 reviewComment.value = "";
             } else {
-                console.error("You cannot submit review while offline");
+                flashSnackbar("You cannot submit review while offline");
             }
         }
     });
