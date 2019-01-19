@@ -351,4 +351,10 @@ class DBHelper {
                 callback(error, null);
             });
     }
+
+    static setFavouriteState(id, state) {
+        return fetch(`${DBHelper.DATABASE_URL}/${id}/?is_favorite=${state}`, {
+            method: "PUT"
+        });
+    }
 }

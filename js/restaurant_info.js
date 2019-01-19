@@ -102,8 +102,8 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
 createFavButton = () => {
     let favButton = document.createElement("button");
     favButton.setAttribute("class", "favourite");
-    // favButton.setAttribute("data-id", restaurant.id);
-    // favButton.setAttribute("data-favourite", false);
+    favButton.setAttribute("data-id", self.restaurant.id);
+    favButton.setAttribute("data-favourite", false);
     favButton.innerHTML = "♡ Favourite";
 
     return favButton;
@@ -111,12 +111,39 @@ createFavButton = () => {
 
 favButtonHandler = () => {
     const btn = document.querySelector(".favourite");
-    btn.addEventListener("click", () => {
+    btn.addEventListener("click", event => {
         if (btn.innerHTML == "♡ Favourite") {
-            flashSnackbar(`You just liked ${self.restaurant.name}`);
             btn.innerHTML = "❤️ Favourite";
+            btn.setAttribute("data-favourite", true);
+            let restaurantState = btn.getAttribute("data-favourite");
+            DBHelper.setFavouriteState(self.restaurant.id, restaurantState)
+                .then(response => {
+                    console.log(response);
+                    if (response.status === 200) {
+                        flashSnackbar(`You just liked ${self.restaurant.name}`);
+                    } else {
+                        console.log("Something went wrong");
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                });
         } else {
             btn.innerHTML = "♡ Favourite";
+            btn.setAttribute("data-favourite", false);
+            let restaurantState = btn.getAttribute("data-favourite");
+            DBHelper.setFavouriteState(self.restaurant.id, restaurantState)
+                .then(response => {
+                    console.log(response);
+                    if (response.status === 200) {
+                        flashSnackbar(`You just liked ${self.restaurant.name}`);
+                    } else {
+                        console.log("Something went wrong");
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                });
         }
     });
 };
