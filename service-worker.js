@@ -82,7 +82,6 @@ self.addEventListener("fetch", event => {
 });
 
 self.addEventListener("sync", event => {
-    console.log("syncing started with ", event);
     if (event.tag === "offline-reviews") {
         event.waitUntil(
             DBHelper.fetchDeferedReview()

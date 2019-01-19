@@ -86,6 +86,10 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
     const cuisine = document.getElementById("restaurant-cuisine");
     cuisine.innerHTML = restaurant.cuisine_type;
 
+    const favourite = document.getElementById("like");
+    favourite.append(createFavButton());
+    favButtonHandler();
+
     // fill operating hours
     if (restaurant.operating_hours) {
         fillRestaurantHoursHTML();
@@ -93,6 +97,28 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
     // fill reviews
 
     fillReviewsHTML();
+};
+
+createFavButton = () => {
+    let favButton = document.createElement("button");
+    favButton.setAttribute("class", "favourite");
+    // favButton.setAttribute("data-id", restaurant.id);
+    // favButton.setAttribute("data-favourite", false);
+    favButton.innerHTML = "♡ Favourite";
+
+    return favButton;
+};
+
+favButtonHandler = () => {
+    const btn = document.querySelector(".favourite");
+    btn.addEventListener("click", () => {
+        if (btn.innerHTML == "♡ Favourite") {
+            flashSnackbar(`You just liked ${self.restaurant.name}`);
+            btn.innerHTML = "❤️ Favourite";
+        } else {
+            btn.innerHTML = "♡ Favourite";
+        }
+    });
 };
 
 /**
@@ -201,7 +227,7 @@ flashSnackbar = message => {
     snackbar.classList.add("show");
     snackbar.innerHTML = message;
 
-    setTimeout(() => snackbar.classList.remove("show"), 4000);
+    setTimeout(() => snackbar.classList.remove("show"), 5000);
 };
 /**
  * Add restaurant name to the breadcrumb navigation menu

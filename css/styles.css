@@ -484,3 +484,9 @@ figure {
         opacity: 0;
     }
 }
+.like {
+    width: 100%;
+}
+.like .favourite {
+    font-size: 1.5em;
+}
