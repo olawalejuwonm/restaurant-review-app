@@ -43,8 +43,8 @@ class DBHelper {
             });
     }
 
-    static fetchRestaurantReviews() {
-        return fetch(DBHelper.REVIEWS_URL)
+    static fetchRestaurantReviews(id) {
+        return fetch(`${DBHelper.REVIEWS_URL}/?restaurant_id=${id}`)
             .then(response => {
                 return response.json();
             })

@@ -176,7 +176,7 @@ fillReviewsHTML = () => {
     const title = document.createElement("h3");
     title.innerHTML = "Reviews";
     container.appendChild(title);
-    DBHelper.fetchRestaurantReviews()
+    DBHelper.fetchRestaurantReviews(self.restaurant.id)
         .then(reviews => {
             console.log(reviews);
             if (!reviews) {
