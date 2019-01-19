@@ -111,18 +111,17 @@ createFavButton = () => {
 
 favButtonHandler = () => {
     const btn = document.querySelector(".favourite");
-    btn.addEventListener("click", event => {
+    btn.addEventListener("click", () => {
         if (btn.innerHTML == "♡ Favourite") {
             btn.innerHTML = "❤️ Favourite";
             btn.setAttribute("data-favourite", true);
             let restaurantState = btn.getAttribute("data-favourite");
             DBHelper.setFavouriteState(self.restaurant.id, restaurantState)
                 .then(response => {
-                    console.log(response);
                     if (response.status === 200) {
                         flashSnackbar(`You just liked ${self.restaurant.name}`);
                     } else {
-                        console.log("Something went wrong");
+                        flashSnackbar("Something went wrong, try again later");
                     }
                 })
                 .catch(error => {
@@ -134,7 +133,6 @@ favButtonHandler = () => {
             let restaurantState = btn.getAttribute("data-favourite");
             DBHelper.setFavouriteState(self.restaurant.id, restaurantState)
                 .then(response => {
-                    console.log(response);
                     if (response.status === 200) {
                         flashSnackbar(`You just liked ${self.restaurant.name}`);
                     } else {
