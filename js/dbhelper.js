@@ -1,24 +1,34 @@
 /**
  * Common database helper functions.
  */
+const port = 1337;
 class DBHelper {
     static get DATABASE_URL() {
-        const port = 1337; // Change this to your server port
+        // const port = 1337; // Change this to your server port
         return `http://localhost:${port}/restaurants`;
     }
+    static get REVIEWS_URL() {
+        return `http://localhost:${port}/reviews`;
+    }
     static openDatabase() {
-        if (!window.navigator.serviceWorker) {
-            console.error(
-                "Your browser does not support Service Worker/IDB, please upgrade to the latest version of any major browser to enjoy offline mode"
+        let indexDb = idb.open("restReviewAppDatabase", 1, upgradeDb => {
+            const restaurantStore = upgradeDb.createObjectStore(
+                "restaurantDB",
+                {
+                    keypath: "id"
+                }
             );
-            return Promise.resolve();
-        }
-
-        let indexDb = idb.open("restaurantsDatabase", 1, upgradeDb => {
-            const store = upgradeDb.createObjectStore("restaurantDB", {
+            const reviewStore = upgradeDb.createObjectStore("reviewsDB", {
                 keypath: "id"
             });
-            store.createIndex("by-id", "id");
+            const deferedReviewStore = upgradeDb.createObjectStore(
+                "deferedReviewDB",
+                {
+                    keypath: "id"
+                }
+            );
+            restaurantStore.createIndex("by-id", "id");
+            reviewStore.createIndex("by-id", "id");
         });
         return indexDb;
     }
@@ -28,12 +38,24 @@ class DBHelper {
                 return response.json();
             })
             .then(restaurants => {
-                DBHelper.saveDataToIdb(restaurants);
+                DBHelper.saveRestaurantDataToIdb(restaurants);
                 return restaurants;
             });
     }
 
-    static saveDataToIdb(restautantsData) {
+    static fetchRestaurantReviews(id) {
+        return fetch(`${DBHelper.REVIEWS_URL}/?restaurant_id=${id}`)
+            .then(response => {
+                return response.json();
+            })
+            .then(reviews => {
+                DBHelper.saveReviewsToIdb(reviews);
+                let allReviews = DBHelper.fetchStoredReviews();
+                return allReviews;
+            });
+    }
+
+    static saveRestaurantDataToIdb(restautantsData) {
         return DBHelper.openDatabase().then(database => {
             if (!database) return;
             const tx = database.transaction("restaurantDB", "readwrite");
@@ -45,12 +67,89 @@ class DBHelper {
         });
     }
 
+    static saveReviewsToIdb(reviews) {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            const tx = database.transaction("reviewsDB", "readwrite");
+            const store = tx.objectStore("reviewsDB");
+            reviews.forEach(review => {
+                store.put(review, review.id);
+            });
+            return tx.complete;
+        });
+    }
+
     static fetchStoredRestaurants() {
         return DBHelper.openDatabase().then(database => {
             if (!database) return;
             let store = database
                 .transaction("restaurantDB")
                 .objectStore("restaurantDB");
+
+            return store.getAll();
+        });
+    }
+    static fetchStoredReviews() {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            let store = database
+                .transaction("reviewsDB")
+                .objectStore("reviewsDB");
+
+            return store.getAll();
+        });
+    }
+    /*
+     *  Add new Review to the review DB
+     */
+    static addNewReview(review) {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            let transaction = database.transaction("reviewsDB", "readwrite");
+            let store = transaction.objectStore("reviewsDB");
+            store.put(review, review.id);
+            return transaction.complete;
+        });
+    }
+
+    static deleteDeferedReview(reviewId) {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            let transaction = database.transaction(
+                "deferedReviewDB",
+                "readwrite"
+            );
+            let store = transaction.objectStore("deferedReviewDB");
+
+            store.delete(reviewId);
+            return transaction.complete;
+        });
+    }
+    /*
+     * save new reviews to the deferedDB and wait for network connection
+     */
+    static addDeferedToIDB(data) {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            let transaction = database.transaction(
+                "deferedReviewDB",
+                "readwrite"
+            );
+            let store = transaction.objectStore("deferedReviewDB");
+
+            store.put(data, data.id);
+            return transaction.complete;
+        });
+    }
+    /*
+     * fetch deferedDB reviews
+     */
+    static fetchDeferedReview() {
+        return DBHelper.openDatabase().then(database => {
+            if (!database) return;
+            let store = database
+                .transaction("deferedReviewDB")
+                .objectStore("deferedReviewDB");
 
             return store.getAll();
         });
@@ -235,14 +334,27 @@ class DBHelper {
         marker.addTo(newMap);
         return marker;
     }
-    /* static mapMarkerForRestaurant(restaurant, map) {
-    const marker = new google.maps.Marker({
-      position: restaurant.latlng,
-      title: restaurant.name,
-      url: DBHelper.urlForRestaurant(restaurant),
-      map: map,
-      animation: google.maps.Animation.DROP}
-    );
-    return marker;
-  } */
+    static saveReviewtoServer(review, callback) {
+        fetch(`${DBHelper.REVIEWS_URL}/`, {
+            method: "POST",
+            body: JSON.stringify(review),
+            header: {
+                "Content-Type": "application/json",
+                Accept: "application/json"
+            }
+        })
+            .then(res => res.json())
+            .then(review => {
+                callback(null, review);
+            })
+            .catch(error => {
+                callback(error, null);
+            });
+    }
+
+    static setFavouriteState(id, state) {
+        return fetch(`${DBHelper.DATABASE_URL}/${id}/?is_favorite=${state}`, {
+            method: "PUT"
+        });
+    }
 }

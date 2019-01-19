@@ -41,22 +41,6 @@ initMap = () => {
     });
 };
 
-/* window.initMap = () => {
-  fetchRestaurantFromURL((error, restaurant) => {
-    if (error) { // Got an error!
-      console.error(error);
-    } else {
-      self.map = new google.maps.Map(document.getElementById('map'), {
-        zoom: 16,
-        center: restaurant.latlng,
-        scrollwheel: false
-      });
-      fillBreadcrumb();
-      DBHelper.mapMarkerForRestaurant(self.restaurant, self.map);
-    }
-  });
-} */
-
 /**
  * Get current restaurant from page URL.
  */
@@ -102,12 +86,64 @@ fillRestaurantHTML = (restaurant = self.restaurant) => {
     const cuisine = document.getElementById("restaurant-cuisine");
     cuisine.innerHTML = restaurant.cuisine_type;
 
+    const favourite = document.getElementById("like");
+    favourite.append(createFavButton());
+    favButtonHandler();
+
     // fill operating hours
     if (restaurant.operating_hours) {
         fillRestaurantHoursHTML();
     }
     // fill reviews
+
     fillReviewsHTML();
+};
+
+createFavButton = () => {
+    let favButton = document.createElement("button");
+    favButton.setAttribute("class", "favourite");
+    favButton.setAttribute("data-id", self.restaurant.id);
+    favButton.setAttribute("data-favourite", false);
+    favButton.innerHTML = "♡ Favourite";
+
+    return favButton;
+};
+
+favButtonHandler = () => {
+    const btn = document.querySelector(".favourite");
+    btn.addEventListener("click", () => {
+        if (btn.innerHTML == "♡ Favourite") {
+            btn.innerHTML = "❤️ Favourite";
+            btn.setAttribute("data-favourite", true);
+            let restaurantState = btn.getAttribute("data-favourite");
+            DBHelper.setFavouriteState(self.restaurant.id, restaurantState)
+                .then(response => {
+                    if (response.status === 200) {
+                        flashSnackbar(`You just liked ${self.restaurant.name}`);
+                    } else {
+                        flashSnackbar("Something went wrong, try again later");
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        } else {
+            btn.innerHTML = "♡ Favourite";
+            btn.setAttribute("data-favourite", false);
+            let restaurantState = btn.getAttribute("data-favourite");
+            DBHelper.setFavouriteState(self.restaurant.id, restaurantState)
+                .then(response => {
+                    if (response.status === 200) {
+                        flashSnackbar(`You just liked ${self.restaurant.name}`);
+                    } else {
+                        console.log("Something went wrong");
+                    }
+                })
+                .catch(error => {
+                    console.error(error);
+                });
+        }
+    });
 };
 
 /**
@@ -135,23 +171,37 @@ fillRestaurantHoursHTML = (
 /**
  * Create all reviews HTML and add them to the webpage.
  */
-fillReviewsHTML = (reviews = self.restaurant.reviews) => {
+fillReviewsHTML = () => {
     const container = document.getElementById("reviews-container");
     const title = document.createElement("h3");
     title.innerHTML = "Reviews";
     container.appendChild(title);
+    DBHelper.fetchRestaurantReviews(self.restaurant.id)
+        .then(reviews => {
+            console.log(reviews);
+            if (!reviews) {
+                const noReviews = document.createElement("p");
+                noReviews.innerHTML = "No reviews yet!";
+                container.appendChild(noReviews);
+                const reviewForm = createReviewForm();
+                container.appendChild(reviewForm);
+                return;
+            }
+            const ul = document.getElementById("reviews-list");
+            reviews.forEach(review => {
+                if (review.restaurant_id === self.restaurant.id) {
+                    ul.appendChild(createReviewHTML(review));
+                    container.appendChild(ul);
+                }
+            });
 
-    if (!reviews) {
-        const noReviews = document.createElement("p");
-        noReviews.innerHTML = "No reviews yet!";
-        container.appendChild(noReviews);
-        return;
-    }
-    const ul = document.getElementById("reviews-list");
-    reviews.forEach(review => {
-        ul.appendChild(createReviewHTML(review));
-    });
-    container.appendChild(ul);
+            const reviewForm = createReviewForm();
+            container.appendChild(reviewForm);
+            submitReview();
+        })
+        .catch(error => {
+            console.log(error);
+        });
 };
 
 /**
@@ -168,7 +218,7 @@ createReviewHTML = review => {
     reviewHeader.appendChild(name);
 
     const date = document.createElement("span");
-    date.innerHTML = review.date;
+    date.innerHTML = new Date(review.updatedAt).toLocaleDateString();
     date.setAttribute("class", "review-date");
     reviewHeader.appendChild(date);
     li.appendChild(reviewHeader);
@@ -188,7 +238,22 @@ createReviewHTML = review => {
 
     return li;
 };
+/**
+ * update reviews list
+ */
+updateReviewsHTML = review => {
+    const ul = document.querySelector("#reviews-list");
 
+    ul.appendChild(createReviewHTML(review));
+};
+
+flashSnackbar = message => {
+    let snackbar = document.querySelector("#snackbar");
+    snackbar.classList.add("show");
+    snackbar.innerHTML = message;
+
+    setTimeout(() => snackbar.classList.remove("show"), 5000);
+};
 /**
  * Add restaurant name to the breadcrumb navigation menu
  */
@@ -197,6 +262,162 @@ fillBreadcrumb = (restaurant = self.restaurant) => {
     const li = document.createElement("li");
     li.innerHTML = restaurant.name;
     breadcrumb.appendChild(li);
+};
+
+createReviewForm = () => {
+    const reviewForm = document.createElement("form");
+    reviewForm.setAttribute("class", "reviews-form");
+
+    const reviewFormTitle = document.createElement("h3");
+    reviewFormTitle.innerHTML = "Add a review";
+
+    reviewForm.append(reviewFormTitle);
+
+    const nameField = createNameInputHTML();
+    const ratingField = createRatingInputHTML();
+    const commentField = createCommentInputHTML();
+    const submitBTN = createSubmitButtonHTML();
+
+    reviewForm.appendChild(nameField);
+    reviewForm.appendChild(ratingField);
+    reviewForm.appendChild(commentField);
+    reviewForm.appendChild(submitBTN);
+
+    return reviewForm;
+};
+
+/**
+ * create name input
+ */
+createNameInputHTML = () => {
+    const nameLabel = document.createElement("label");
+    nameLabel.innerHTML = "Name: ";
+    const nameInput = document.createElement("input");
+    nameInput.setAttribute("type", "text");
+    nameInput.setAttribute("class", "reviewerName");
+    nameLabel.appendChild(nameInput);
+
+    return nameLabel;
+};
+/**
+ * create rating input
+ */
+createRatingInputHTML = () => {
+    const ratingLabel = document.createElement("label");
+    ratingLabel.innerHTML = "Rating: ";
+    const ratingInput = document.createElement("input");
+    ratingInput.setAttribute("type", "number");
+    ratingInput.setAttribute("min", "1");
+    ratingInput.setAttribute("max", "5");
+    ratingInput.setAttribute("class", "rating");
+    ratingLabel.appendChild(ratingInput);
+
+    return ratingLabel;
+};
+
+/**
+ * create comment box
+ */
+createCommentInputHTML = () => {
+    const commentLabel = document.createElement("label");
+    commentLabel.innerHTML = "Comment: ";
+    const commentBox = document.createElement("textarea");
+    commentBox.setAttribute("class", "comment");
+    commentLabel.appendChild(commentBox);
+
+    return commentLabel;
+};
+
+createSubmitButtonHTML = () => {
+    const submitBtn = document.createElement("button");
+    submitBtn.setAttribute("class", "submit-review");
+    submitBtn.setAttribute("type", "submit");
+    submitBtn.innerHTML = "Submit Review";
+
+    return submitBtn;
+};
+
+/**
+ * Review Form Handler
+ */
+submitReview = () => {
+    const reviewForm = document.querySelector("form");
+    const reviewer = document.querySelector(".reviewerName");
+    const reviewRating = document.querySelector(".rating");
+    const reviewComment = document.querySelector(".comment");
+
+    reviewForm.addEventListener("submit", event => {
+        event.preventDefault();
+        if (!reviewer.value || !reviewRating.value || !reviewComment.value) {
+            alert("Please fill in all fields");
+            return;
+        }
+        const review = {
+            name: reviewer.value,
+            rating: reviewRating.value,
+            comments: reviewComment.value,
+            restaurant_id: self.restaurant.id
+        };
+
+        if ("serviceWorker" in navigator && "SyncManager" in window) {
+            if (navigator.onLine) {
+                DBHelper.saveReviewtoServer(review, (error, response) => {
+                    if (error) {
+                        console.log(error);
+                    }
+                    flashSnackbar("Review Added Successfully");
+                    DBHelper.addNewReview(response); //add the response to IDB
+                    updateReviewsHTML(response); //update the view
+                });
+                reviewer.value = "";
+                reviewRating.value = "";
+                reviewComment.value = "";
+            } else {
+                console.log("You are offline but we've got you covered");
+                navigator.serviceWorker.ready
+                    .then(worker => {
+                        const date = new Date().toISOString();
+                        review.id = date;
+                        review.createdAt = date;
+                        review.updatedAt = date;
+                        DBHelper.addDeferedToIDB(review)
+                            .then(() => {
+                                worker.sync.register("offline-reviews");
+                            })
+                            .then(() => {
+                                flashSnackbar(
+                                    "Review will be submitted when you have a network connection"
+                                );
+                                updateReviewsHTML(review); //update the view
+                                reviewer.value = "";
+                                reviewRating.value = "";
+                                reviewComment.value = "";
+                            })
+                            .catch(error => console.error(error));
+                    })
+                    .catch(error => console.error(error));
+            }
+        } else {
+            console.log(
+                "Your browser does not support offline submission of comment"
+            );
+            if (navigator.onLine) {
+                DBHelper.saveReviewtoServer(review, (error, response) => {
+                    if (error) {
+                        console.log(error);
+                    }
+                    console.log("Submited Successfully");
+                    DBHelper.addNewReview(response); //add the response to IDB
+                    updateReviewsHTML(response); //update the view
+                });
+                reviewer.value = "";
+                reviewRating.value = "";
+                reviewComment.value = "";
+            } else {
+                flashSnackbar("You cannot submit review while offline");
+            }
+        }
+    });
 };
 
 /**
