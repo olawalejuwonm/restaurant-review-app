@@ -384,6 +384,49 @@ figure {
     letter-spacing: 1px;
     font-weight: 600;
 }
+.reviews-form {
+    display: flex;
+    flex-direction: column;
+    flex-wrap: wrap;
+}
+.reviews-form label {
+    flex: 1;
+    width: 100%;
+    margin-top: 5px;
+}
+
+.reviews-form input,
+.reviews-form textarea {
+    display: block;
+    width: 100%;
+    font-size: 1rem;
+    font-weight: 400;
+    line-height: 1.5;
+    background-color: #fff;
+    background-clip: padding-box;
+    border: 1px solid orange;
+    border-radius: 0.25rem;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.reviews-form textarea {
+    height: auto;
+}
+
+.reviews-form button {
+    display: block;
+    width: 100%;
+    cursor: pointer;
+    text-align: center;
+    color: #fff;
+    background-color: orange;
+    border-color: #fff;
+    padding: 0.5rem 1rem;
+    font-size: 1.25rem;
+    line-height: 1.5;
+    border-radius: 0.3rem;
+    margin-top: 1rem;
+}
 @media (max-width: 800px) {
     .inside #map-container {
         width: 100%;
@@ -392,4 +435,60 @@ figure {
         width: 100%;
         margin-top: 16px;
     }
+}
+
+/* toast styles*/
+.snackbar {
+    visibility: hidden; /* Hidden by default. Visible on click */
+    min-width: 250px;
+    margin-left: -125px;
+    background-color: orange;
+    color: #fff;
+    text-align: center;
+    border-radius: 2px;
+    padding: 16px;
+    position: fixed;
+    z-index: 1;
+    left: 50%;
+    bottom: 30px;
+}
+
+/* Show the snackbar when clicking on a button (class added with JavaScript) */
+.snackbar.show {
+    visibility: visible; /* Show the snackbar */
+    /* Add animation: Take 0.5 seconds to fade in and out the snackbar.
+     However, delay the fade out process for 2.5 seconds */
+    -webkit-animation: fadein 0.5s, fadeout 0.5s 2.5s;
+    animation: fadein 0.5s, fadeout 0.5s 2.5s;
+}
+
+/* Animations to fade the snackbar in and out */
+@keyframes fadein {
+    from {
+        bottom: 0;
+        opacity: 0;
+    }
+    to {
+        bottom: 30px;
+        opacity: 1;
+    }
+}
+
+@keyframes fadeout {
+    from {
+        bottom: 30px;
+        opacity: 1;
+    }
+    to {
+        bottom: 0;
+        opacity: 0;
+    }
+}
+.like {
+    width: 100%;
+    text-align: center;
+}
+.like .favourite {
+    font-size: 1.5em;
+    margin: 0.5em;
 }
