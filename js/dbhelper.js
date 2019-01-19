@@ -11,13 +11,6 @@ class DBHelper {
         return `http://localhost:${port}/reviews`;
     }
     static openDatabase() {
-        if (!window.navigator.serviceWorker) {
-            console.error(
-                "Your browser does not support Service Worker/IDB, please upgrade to the latest version of any major browser to enjoy offline mode"
-            );
-            return Promise.resolve();
-        }
-
         let indexDb = idb.open("restReviewAppDatabase", 1, upgradeDb => {
             const restaurantStore = upgradeDb.createObjectStore(
                 "restaurantDB",

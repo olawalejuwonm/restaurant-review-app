@@ -1,5 +1,5 @@
-// importScripts("/js/dbhelper.js");
 if ("function" === typeof importScripts) {
+    importScripts("/js/idb.js");
     importScripts("/js/dbhelper.js");
 }
 let CACHE_NAME = "restaurant-cache-v1";
