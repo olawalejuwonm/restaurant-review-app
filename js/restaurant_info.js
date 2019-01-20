@@ -1,6 +1,7 @@
 let restaurant;
 var newMap;
 
+serviceWorker();
 /**
  * Initialize map as soon as the page is loaded.
  */
