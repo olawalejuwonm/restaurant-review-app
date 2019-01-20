@@ -1,0 +1,13 @@
+# Contributing: submitting patches
+
+## Submitting a pull request
+
+Thank you in advance for every pull request.
+Every one will be carefully evaluated.
+
+Please follow the following style guidelines:
+
+-   [Udacity's HTML Style Guide](http://udacity.github.io/frontend-nanodegree-styleguide/index.html)
+-   [Udacity's CSS Style Guide](http://udacity.github.io/frontend-nanodegree-styleguide/css.html)
+-   [Udacity's JavaScript Style Guide](http://udacity.github.io/frontend-nanodegree-styleguide/javascript.html)
+-   [Udacity Git Commit Message Style Guide](https://udacity.github.io/git-styleguide/)
