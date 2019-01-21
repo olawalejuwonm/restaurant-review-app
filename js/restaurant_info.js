@@ -1,6 +1,7 @@
 let restaurant;
 var newMap;
 
+serviceWorker();
 /**
  * Initialize map as soon as the page is loaded.
  */
@@ -361,14 +362,7 @@ submitReview = () => {
 
         if ("serviceWorker" in navigator && "SyncManager" in window) {
             if (navigator.onLine) {
-                DBHelper.saveReviewtoServer(review, (error, response) => {
-                    if (error) {
-                        console.log(error);
-                    }
-                    flashSnackbar("Review Added Successfully");
-                    DBHelper.addNewReview(response); //add the response to IDB
-                    updateReviewsHTML(response); //update the view
-                });
+                submitReviewToServer(review);
                 reviewer.value = "";
                 reviewRating.value = "";
                 reviewComment.value = "";
@@ -402,14 +396,7 @@ submitReview = () => {
                 "Your browser does not support offline submission of comment"
             );
             if (navigator.onLine) {
-                DBHelper.saveReviewtoServer(review, (error, response) => {
-                    if (error) {
-                        console.log(error);
-                    }
-                    console.log("Submited Successfully");
-                    DBHelper.addNewReview(response); //add the response to IDB
-                    updateReviewsHTML(response); //update the view
-                });
+                submitReviewToServer(review);
                 reviewer.value = "";
                 reviewRating.value = "";
                 reviewComment.value = "";
@@ -420,6 +407,23 @@ submitReview = () => {
     });
 };
 
+submitReviewToServer = review => {
+    DBHelper.saveReviewtoServer(review, (error, response) => {
+        if (error) {
+            console.log(error);
+        }
+        flashSnackbar("Review Added Successfully");
+        DBHelper.addNewReview(response); //add the response to IDB
+        updateReviewsHTML(response); //update the view
+    });
+    resetReviewForm(review);
+};
+
+/* Reset the form after successful submission */
+
+resetReviewForm = review => {
+    console.log(review);
+};
 /**
  * Get a parameter by name from page URL.
  */

@@ -1,6 +1,16 @@
 /**
  * Common database helper functions.
  */
+
+function serviceWorker() {
+    if (!navigator.serviceWorker) return;
+    navigator.serviceWorker
+        .register("../service-worker.js")
+        .then(reg => console.info("Service worker registered with state."))
+        .catch(err =>
+            console.error("Failed to register Service worker: ", err)
+        );
+}
 const port = 1337;
 class DBHelper {
     static get DATABASE_URL() {
